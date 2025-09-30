@@ -1,0 +1,116 @@
+@startuml CinemaAbyss_Container_Simplified
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Контейнерная диаграмма системы "Кинобездна" - To-Be архитектура (упрощенная)
+
+Person(user, "Пользователь", "Пользователь стримингового сервиса")
+Person(admin, "Администратор", "Администратор системы")
+
+System_Boundary(cinema_system, "Система Кинобездна") {
+
+    Container_Boundary(frontend, "Frontend") {
+        Container(web_app, "Web/Mobile/TV Apps", "React/React Native", "Клиентские приложения")
+        Container(admin_panel, "Admin Panel", "React", "Панель администратора")
+    }
+
+    Container(api_gateway, "API Gateway", "Go", "Единая точка входа, маршрутизация, аутентификация, BFF")
+
+    Container_Boundary(core_domain, "Core Domain - Контент") {
+        Container(movie_service, "Movies Service", "Go", "Метаданные фильмов, жанры, актеры, рейтинги")
+        Container(catalog_service, "Catalog Service", "Go", "Каталог контента и поиск")
+        Container(streaming_service, "Streaming Service", "Go", "Управление потоковой передачей видео")
+        Container(recommendation_service, "Recommendation Service", "Python/Go", "Рекомендательная система")
+    }
+
+    Container_Boundary(user_domain, "User Domain - Пользователи") {
+        Container(auth_service, "Auth Service", "Go", "Аутентификация и авторизация")
+        Container(user_service, "User Service", "Go", "Управление пользователями и профилями")
+        Container(watch_history_service, "Watch History Service", "Go", "История просмотров и избранное")
+    }
+
+    Container_Boundary(payment_domain, "Payment Domain - Платежи") {
+        Container(subscription_service, "Subscription Service", "Go", "Управление подписками")
+        Container(payment_service, "Payment Service", "Go", "Обработка платежей")
+        Container(billing_service, "Billing Service", "Go", "Биллинг и тарификация")
+        Container(discount_service, "Discount Service", "Go", "Управление скидками")
+    }
+
+    Container_Boundary(integration_domain, "Integration Domain") {
+        Container(notification_service, "Notification Service", "Go", "Уведомления (email, push, SMS)")
+        Container(analytics_service, "Analytics Service", "Go", "Сбор и обработка аналитики")
+        Container(integration_adapter, "Integration Adapter", "Go", "Адаптер для внешних интеграций")
+    }
+
+    Container_Boundary(infrastructure, "Infrastructure") {
+        ContainerQueue(kafka, "Apache Kafka", "Message Broker", "Асинхронная коммуникация")
+        ContainerDb(postgres, "PostgreSQL", "RDBMS", "Основная база данных")
+        ContainerDb(redis, "Redis", "Cache", "Кэширование")
+        ContainerDb(elasticsearch, "Elasticsearch", "Search", "Полнотекстовый поиск")
+        Container(istio, "Istio", "Service Mesh", "Управление трафиком, Circuit Breaker")
+    }
+}
+
+System_Ext(cdn, "CDN", "Content Delivery Network")
+System_Ext(payment_gateway, "Payment Gateway", "Внешние платежные системы")
+System_Ext(external_services, "External Services", "Email, SMS, маркетплейсы, партнеры")
+System_Ext(content_providers, "Content Providers", "Внешние поставщики контента")
+
+' User interactions
+Rel(user, web_app, "Использует", "HTTPS")
+Rel(admin, admin_panel, "Управляет", "HTTPS")
+
+' Frontend to Gateway
+Rel(web_app, api_gateway, "API запросы", "HTTPS/REST")
+Rel(admin_panel, api_gateway, "API запросы", "HTTPS/REST")
+
+' Gateway to Services
+Rel(api_gateway, auth_service, "Аутентификация", "gRPC")
+Rel(api_gateway, user_service, "Пользователи", "gRPC")
+Rel(api_gateway, movie_service, "Фильмы", "gRPC")
+Rel(api_gateway, catalog_service, "Каталог", "gRPC")
+Rel(api_gateway, subscription_service, "Подписки", "gRPC")
+Rel(api_gateway, payment_service, "Платежи", "gRPC")
+
+' Core domain interactions
+Rel(catalog_service, movie_service, "Метаданные", "gRPC")
+Rel(catalog_service, elasticsearch, "Поиск", "HTTP")
+Rel(streaming_service, cdn, "Контент", "HTTPS")
+Rel(recommendation_service, watch_history_service, "История", "gRPC")
+Rel(recommendation_service, movie_service, "Рейтинги", "gRPC")
+
+' Payment domain interactions
+Rel(subscription_service, payment_service, "Платежи", "gRPC")
+Rel(payment_service, payment_gateway, "Обработка", "HTTPS")
+Rel(billing_service, subscription_service, "Подписки", "gRPC")
+Rel(discount_service, billing_service, "Скидки", "gRPC")
+
+' Integration interactions
+Rel(notification_service, external_services, "Отправка", "HTTPS")
+Rel(integration_adapter, external_services, "Интеграция", "HTTPS")
+Rel(integration_adapter, content_providers, "Контент", "HTTPS")
+
+' Async messaging
+Rel(user_service, kafka, "События пользователей", "Kafka")
+Rel(movie_service, kafka, "События фильмов", "Kafka")
+Rel(payment_service, kafka, "События платежей", "Kafka")
+Rel(analytics_service, kafka, "Подписка на события", "Kafka")
+Rel(notification_service, kafka, "Подписка на события", "Kafka")
+
+' Database interactions
+Rel(user_service, postgres, "Данные пользователей", "SQL")
+Rel(movie_service, postgres, "Данные фильмов", "SQL")
+Rel(subscription_service, postgres, "Данные подписок", "SQL")
+Rel(payment_service, postgres, "Данные платежей", "SQL")
+
+' Cache interactions
+Rel(api_gateway, redis, "Кэш сессий", "Redis")
+Rel(movie_service, redis, "Кэш метаданных", "Redis")
+Rel(catalog_service, redis, "Кэш каталога", "Redis")
+
+' Service mesh
+Rel_U(istio, api_gateway, "Traffic management")
+Rel_U(istio, movie_service, "Circuit Breaker")
+
+@enduml
