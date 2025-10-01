@@ -1,23 +1,52 @@
-# Temporary placeholder for events service
-FROM alpine:latest
+# Build stage
+FROM golang:1.21-alpine AS builder
 
-# Install basic tools
-RUN apk --no-cache add curl
+# Install build dependencies
+RUN apk add --no-cache git
 
-# Create working directory
+# Set working directory
 WORKDIR /app
 
-# Add a simple health check script
-RUN echo '#!/bin/sh' > /app/server.sh && \
-    echo 'echo "Events service placeholder starting..."' >> /app/server.sh && \
-    echo 'while true; do' >> /app/server.sh && \
-    echo '  echo "Events service is running (placeholder)..."' >> /app/server.sh && \
-    echo '  sleep 30' >> /app/server.sh && \
-    echo 'done' >> /app/server.sh && \
-    chmod +x /app/server.sh
+# Copy go mod files
+COPY go.mod go.sum* ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o events-service .
+
+# Final stage
+FROM alpine:latest
+
+# Install ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates
+
+# Create non-root user
+RUN addgroup -g 1000 -S appuser && \
+    adduser -u 1000 -S appuser -G appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /app/events-service .
+
+# Change ownership
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8082
 
-# Run the placeholder script
-CMD ["/app/server.sh"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8082/api/events/health || exit 1
+
+# Run the application
+CMD ["./events-service"]
