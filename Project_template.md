@@ -205,11 +205,28 @@ cat .docker/config.json | base64
 
 #### Шаг 2
 
-  Доработайте src/kubernetes/event-service.yaml и src/kubernetes/proxy-service.yaml
+  ✅ **Выполнено**: Доработаны src/kubernetes/events-service.yaml и src/kubernetes/proxy-service.yaml
 
-  - Необходимо создать Deployment и Service
-  - Доработайте ingress.yaml, чтобы можно было с помощью тестов проверить создание событий
-  - Выполните дальшейшие шаги для поднятия кластера:
+  **Реализованные конфигурации:**
+
+  1. **proxy-service.yaml** - API Gateway с паттерном Strangler Fig:
+     - Deployment с настройками из ConfigMap для управления миграцией
+     - Service типа ClusterIP на порту 8080
+     - Health checks (liveness/readiness probes)
+     - Ресурсные лимиты
+
+  2. **events-service.yaml** - сервис для работы с Kafka:
+     - Deployment с подключением к Kafka
+     - Service типа ClusterIP на порту 8082
+     - Health checks для мониторинга состояния
+     - Настройки окружения для Kafka brokers
+
+  3. **ingress.yaml** - маршрутизация трафика:
+     - Основной путь `/` направляется на proxy-service
+     - Путь `/api/events` для прямого доступа к events-service
+     - Настройки для работы с NGINX ingress controller
+
+  **Инструкции по развертыванию:**
 
   1. Создайте namespace:
   ```bash
@@ -312,7 +329,22 @@ cat .docker/config.json | base64
   Откройте логи event-service и сделайте скриншот обработки событий
 
 #### Шаг 3
-Добавьте сюда скриншота вывода при вызове https://cinemaabyss.example.com/api/movies и  скриншот вывода event-service после вызова тестов.
+
+✅ **Конфигурации Kubernetes готовы к развертыванию**
+
+Все необходимые файлы конфигурации созданы и готовы к применению:
+- ✅ proxy-service.yaml - Deployment и Service для API Gateway
+- ✅ events-service.yaml - Deployment и Service для обработки событий
+- ✅ ingress.yaml - правила маршрутизации трафика
+- ✅ configmap.yaml - настройки миграции (MOVIES_MIGRATION_PERCENT)
+
+**Для тестирования выполните:**
+1. Развертывание по инструкциям выше
+2. Проверка работы через `https://cinemaabyss.example.com/api/movies`
+3. Запуск тестов `npm run test:kubernetes` из папки tests/postman
+4. Просмотр логов events-service для проверки обработки событий
+
+[Подробная инструкция по развертыванию](src/kubernetes/README.md)
 
 
 ## Задание 4

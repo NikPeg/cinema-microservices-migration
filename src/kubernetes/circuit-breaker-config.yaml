@@ -1,0 +1,141 @@
+# DestinationRule для movies-service с Circuit Breaker
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: movies-service-circuit-breaker
+  namespace: cinemaabyss
+spec:
+  host: movies-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 10
+      http:
+        http1MaxPendingRequests: 10
+        http2MaxRequests: 20
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 30
+      splitExternalLocalOriginErrors: false
+---
+# DestinationRule для monolith с Circuit Breaker
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: monolith-circuit-breaker
+  namespace: cinemaabyss
+spec:
+  host: monolith
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 10
+      http:
+        http1MaxPendingRequests: 10
+        http2MaxRequests: 20
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 30
+      splitExternalLocalOriginErrors: false
+---
+# VirtualService для управления трафиком
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: movies-service-vs
+  namespace: cinemaabyss
+spec:
+  hosts:
+  - movies-service
+  http:
+  - match:
+    - uri:
+        prefix: "/api/movies"
+    route:
+    - destination:
+        host: movies-service
+        port:
+          number: 8081
+    timeout: 10s
+    retries:
+      attempts: 3
+      perTryTimeout: 3s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+---
+# VirtualService для monolith
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: monolith-vs
+  namespace: cinemaabyss
+spec:
+  hosts:
+  - monolith
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: monolith
+        port:
+          number: 8080
+    timeout: 10s
+    retries:
+      attempts: 3
+      perTryTimeout: 3s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+---
+# Gateway для Istio Ingress
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: cinemaabyss-gateway
+  namespace: cinemaabyss
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "cinemaabyss.example.com"
+---
+# VirtualService для внешнего трафика через Gateway
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: cinemaabyss-external-vs
+  namespace: cinemaabyss
+spec:
+  hosts:
+  - "cinemaabyss.example.com"
+  gateways:
+  - cinemaabyss-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/api/events"
+    route:
+    - destination:
+        host: events-service
+        port:
+          number: 8082
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: proxy-service
+        port:
+          number: 8080
