@@ -34,7 +34,7 @@ monolith:
   enabled: true
   image:
     repository: ghcr.io/nikpeg/cinema-microservices-migration/monolith
-    tag: latest@sha256:7322714982fb3ac4fc2cb1c10d745491b0566532c8ede0997bfeac451845fe4b
+    tag: latest
     pullPolicy: Always
   replicas: 1
   resources:
@@ -74,7 +74,7 @@ moviesService:
   enabled: true
   image:
     repository: ghcr.io/nikpeg/cinema-microservices-migration/movies-service
-    tag: latest@sha256:bb28fd7740c56352275b8e310ce89a59e4ed569c430f6761ebdc2fd86ea49664
+    tag: latest
     pullPolicy: Always
   replicas: 1
   resources:
@@ -94,7 +94,7 @@ eventsService:
   enabled: true
   image:
     repository: ghcr.io/nikpeg/cinema-microservices-migration/events-service
-    tag: latest@sha256:18ef72125d83ce5249b1d1961d90d6048b4b3d15c2c51306fa884f163adb9b95
+    tag: latest
     pullPolicy: Always
   replicas: 1
   resources:
