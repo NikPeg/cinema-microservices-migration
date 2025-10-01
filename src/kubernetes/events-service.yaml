@@ -19,7 +19,7 @@ spec:
         - name: dockerconfigjson-github-com
       containers:
       - name: events-service
-        image: ghcr.io/nspeganov/cinema-microservices-migration/events-service:latest
+        image: ghcr.io/nikpeg/cinema-microservices-migration/events-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8082

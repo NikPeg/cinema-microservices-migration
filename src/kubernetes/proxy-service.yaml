@@ -19,7 +19,7 @@ spec:
         - name: dockerconfigjson-github-com
       containers:
       - name: proxy-service
-        image: ghcr.io/nspeganov/cinema-microservices-migration/proxy-service:latest
+        image: ghcr.io/nikpeg/cinema-microservices-migration/proxy-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
