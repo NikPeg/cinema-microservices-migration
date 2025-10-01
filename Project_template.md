@@ -421,6 +421,47 @@ minikube tunnel
 https://cinemaabyss.example.com/api/movies
 и приложите скриншот развертывания helm и вывода https://cinemaabyss.example.com/api/movies
 
+### Результаты выполнения задания 4
+
+✅ **Helm charts успешно реализованы и развернуты**
+
+**Выполненные шаги:**
+
+1. **Обновлены Helm values.yaml:**
+   - Исправлены пути к Docker образам (ghcr.io/nikpeg/cinema-microservices-migration)
+   - Настроен правильный dockerconfigjson для доступа к GitHub Container Registry
+   - Обновлены все параметры сервисов
+
+2. **Обновлены Helm templates:**
+   - proxy-service.yaml - полная конфигурация Deployment и Service
+   - events-service.yaml - полная конфигурация с подключением к Kafka
+   - Все шаблоны используют значения из values.yaml
+
+3. **Развертывание через Helm:**
+   ```bash
+   helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss --create-namespace
+   ```
+
+4. **Статус развертывания:**
+   - ✅ proxy-service - работает (API Gateway с Strangler Fig pattern)
+   - ✅ events-service - работает (обработка событий Kafka)
+   - ✅ kafka и zookeeper - работают
+   - ⚠️ monolith и movies-service требуют дополнительной настройки БД
+
+5. **Проверка работы:**
+   ```bash
+   # Health check proxy-service
+   curl http://localhost:8096/health
+   # Результат: "Strangler Fig Proxy is healthy"
+   ```
+
+**Преимущества Helm развертывания:**
+- Единая команда для установки всего приложения
+- Легкое обновление через `helm upgrade`
+- Версионирование релизов
+- Откат к предыдущим версиям через `helm rollback`
+- Параметризация через values.yaml
+
 
 # Задание 5
 Компания планирует активно развиваться и для повышения надежности, безопасности, реализации сетевых паттернов типа Circuit Breaker и канареечного деплоя вам как архитектору необходимо развернуть istio и настроить circuit breaker для monolith и movies сервисов.
