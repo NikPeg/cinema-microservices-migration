@@ -40,6 +40,8 @@ spec:
             configMapKeyRef:
               name: cinemaabyss-config
               key: DB_NAME
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         resources:
           {{- toYaml .Values.database.resources | nindent 10 }}
         volumeMounts:
