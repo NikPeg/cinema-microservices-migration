@@ -1,4 +1,8 @@
-FROM golang:1.23-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
+
+# Add build arguments for cross-compilation
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -11,11 +15,11 @@ RUN go mod download
 # Copy the source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o monolith .
+# Build the application for the target platform
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -installsuffix cgo -o monolith .
 
 # Use a smaller image for the final application
-FROM alpine:latest  
+FROM --platform=$TARGETPLATFORM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 

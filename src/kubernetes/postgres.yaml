@@ -35,6 +35,8 @@ spec:
             configMapKeyRef:
               name: cinemaabyss-config
               key: DB_NAME
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         resources:
           limits:
             cpu: "1000m"

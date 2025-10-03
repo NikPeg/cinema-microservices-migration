@@ -11,8 +11,15 @@ spec:
     - host: cinemaabyss.example.com
       http:
         paths:
-          #дополните конфигурацию для /
-          ...
+          # Основной путь - все запросы идут через proxy-service
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8080
+          # Прямой доступ к events-service для тестирования
           - path: /api/events
             pathType: Prefix
             backend:

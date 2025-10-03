@@ -1,0 +1,166 @@
+@startuml CinemaAbyss_Container_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+
+!include DEVICONS/go.puml
+!include DEVICONS/react.puml
+!include DEVICONS/postgresql.puml
+!include FONTAWESOME/users.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Контейнерная диаграмма системы "Кинобездна" (To-Be архитектура)
+
+Person(user, "Пользователь", "Пользователь стримингового сервиса")
+Person(admin, "Администратор", "Администратор системы")
+
+System_Boundary(cinema_system, "Система Кинобездна") {
+
+    Container_Boundary(frontend, "Frontend Applications") {
+        Container(web_app, "Web Application", "React/Vue.js", "Веб-интерфейс для пользователей", $sprite="react")
+        Container(mobile_app, "Mobile Application", "React Native", "Мобильное приложение", $sprite="react")
+        Container(smart_tv_app, "Smart TV Application", "React TV", "Приложение для Smart TV")
+        Container(admin_panel, "Admin Panel", "React", "Панель администратора", $sprite="react")
+    }
+
+    Container_Boundary(api_layer, "API Gateway Layer") {
+        Container(api_gateway, "API Gateway", "Go", "Единая точка входа, маршрутизация, аутентификация", $sprite="go")
+        Container(bff_web, "BFF Web", "Go", "Backend for Frontend для веб-приложения", $sprite="go")
+        Container(bff_mobile, "BFF Mobile", "Go", "Backend for Frontend для мобильного приложения", $sprite="go")
+        Container(bff_tv, "BFF TV", "Go", "Backend for Frontend для Smart TV", $sprite="go")
+    }
+
+    Container_Boundary(core_services, "Core Microservices") {
+        Container(auth_service, "Auth Service", "Go", "Аутентификация и авторизация", $sprite="go")
+        Container(user_service, "User Service", "Go", "Управление пользователями и профилями", $sprite="go")
+        Container(movie_service, "Movies Service", "Go", "Метаданные фильмов, жанры, актеры", $sprite="go")
+        Container(catalog_service, "Catalog Service", "Go", "Каталог контента и поиск", $sprite="go")
+        Container(streaming_service, "Streaming Service", "Go", "Управление потоковой передачей видео", $sprite="go")
+        Container(recommendation_service, "Recommendation Service", "Python/Go", "Рекомендательная система", $sprite="go")
+    }
+
+    Container_Boundary(business_services, "Business Microservices") {
+        Container(subscription_service, "Subscription Service", "Go", "Управление подписками", $sprite="go")
+        Container(payment_service, "Payment Service", "Go", "Обработка платежей", $sprite="go")
+        Container(billing_service, "Billing Service", "Go", "Биллинг и тарификация", $sprite="go")
+        Container(discount_service, "Discount Service", "Go", "Управление скидками и промокодами", $sprite="go")
+        Container(loyalty_service, "Loyalty Service", "Go", "Программа лояльности", $sprite="go")
+    }
+
+    Container_Boundary(analytics_services, "Analytics & Monitoring") {
+        Container(analytics_service, "Analytics Service", "Go", "Сбор и обработка аналитики", $sprite="go")
+        Container(rating_service, "Rating Service", "Go", "Рейтинги и отзывы", $sprite="go")
+        Container(watch_history_service, "Watch History Service", "Go", "История просмотров", $sprite="go")
+    }
+
+    Container_Boundary(integration_services, "Integration Services") {
+        Container(notification_service, "Notification Service", "Go", "Уведомления (email, push, SMS)", $sprite="go")
+        Container(integration_adapter, "Integration Adapter", "Go", "Адаптер для внешних интеграций", $sprite="go")
+        Container(content_ingestion, "Content Ingestion Service", "Go", "Загрузка и обработка контента", $sprite="go")
+    }
+
+    Container_Boundary(infrastructure, "Infrastructure Components") {
+        ContainerQueue(message_broker, "Message Broker", "Apache Kafka", "Асинхронная коммуникация между сервисами")
+        ContainerDb(cache, "Distributed Cache", "Redis Cluster", "Кэширование данных")
+        ContainerDb(main_db, "Main Database", "PostgreSQL", "Основная база данных", $sprite="postgresql")
+        ContainerDb(analytics_db, "Analytics Database", "ClickHouse", "База данных для аналитики")
+        ContainerDb(search_engine, "Search Engine", "Elasticsearch", "Полнотекстовый поиск")
+        Container(service_mesh, "Service Mesh", "Istio", "Управление сервисной сеткой")
+        Container(config_server, "Config Server", "Consul/Vault", "Централизованная конфигурация")
+    }
+}
+
+System_Ext(cdn, "CDN", "Content Delivery Network для видео контента")
+System_Ext(payment_gateway, "Payment Gateway", "Внешние платежные системы")
+System_Ext(sms_gateway, "SMS Gateway", "Сервис отправки SMS")
+System_Ext(email_service, "Email Service", "Сервис отправки email")
+System_Ext(external_content, "External Content Providers", "Внешние поставщики контента")
+System_Ext(marketplace, "Marketplaces", "Интеграции с маркетплейсами")
+System_Ext(loyalty_partners, "Loyalty Partners", "Партнеры программы лояльности")
+
+' Relationships - User interactions
+Rel(user, web_app, "Использует", "HTTPS")
+Rel(user, mobile_app, "Использует", "HTTPS")
+Rel(user, smart_tv_app, "Использует", "HTTPS")
+Rel(admin, admin_panel, "Управляет системой", "HTTPS")
+
+' Frontend to BFF
+Rel(web_app, bff_web, "API запросы", "HTTPS/REST")
+Rel(mobile_app, bff_mobile, "API запросы", "HTTPS/REST")
+Rel(smart_tv_app, bff_tv, "API запросы", "HTTPS/REST")
+Rel(admin_panel, api_gateway, "API запросы", "HTTPS/REST")
+
+' BFF to API Gateway
+Rel(bff_web, api_gateway, "Маршрутизация", "HTTP/gRPC")
+Rel(bff_mobile, api_gateway, "Маршрутизация", "HTTP/gRPC")
+Rel(bff_tv, api_gateway, "Маршрутизация", "HTTP/gRPC")
+
+' API Gateway to Services
+Rel(api_gateway, auth_service, "Аутентификация", "gRPC")
+Rel(api_gateway, user_service, "Управление пользователями", "gRPC")
+Rel(api_gateway, movie_service, "Данные фильмов", "gRPC")
+Rel(api_gateway, catalog_service, "Каталог", "gRPC")
+Rel(api_gateway, subscription_service, "Подписки", "gRPC")
+Rel(api_gateway, payment_service, "Платежи", "gRPC")
+
+' Service interactions
+Rel(catalog_service, movie_service, "Получает метаданные", "gRPC")
+Rel(catalog_service, search_engine, "Индексация и поиск", "HTTP")
+Rel(streaming_service, cdn, "Доставка контента", "HTTPS")
+Rel(recommendation_service, watch_history_service, "История для рекомендаций", "gRPC")
+Rel(recommendation_service, rating_service, "Рейтинги для рекомендаций", "gRPC")
+
+' Business services interactions
+Rel(subscription_service, payment_service, "Инициирует платежи", "gRPC")
+Rel(payment_service, payment_gateway, "Обработка платежей", "HTTPS")
+Rel(billing_service, subscription_service, "Информация о подписках", "gRPC")
+Rel(discount_service, billing_service, "Применение скидок", "gRPC")
+Rel(loyalty_service, loyalty_partners, "Интеграция с партнерами", "HTTPS")
+
+' Notification service
+Rel(notification_service, email_service, "Отправка email", "HTTPS")
+Rel(notification_service, sms_gateway, "Отправка SMS", "HTTPS")
+
+' Integration adapter
+Rel(integration_adapter, marketplace, "Синхронизация", "HTTPS")
+Rel(integration_adapter, external_content, "Получение контента", "HTTPS")
+Rel(content_ingestion, external_content, "Загрузка контента", "HTTPS")
+
+' Message broker interactions
+Rel(user_service, message_broker, "Публикует события", "Kafka")
+Rel(movie_service, message_broker, "Публикует события", "Kafka")
+Rel(payment_service, message_broker, "Публикует события", "Kafka")
+Rel(subscription_service, message_broker, "Публикует события", "Kafka")
+Rel(analytics_service, message_broker, "Подписка на события", "Kafka")
+Rel(notification_service, message_broker, "Подписка на события", "Kafka")
+Rel(watch_history_service, message_broker, "Публикует/Подписка", "Kafka")
+
+' Database interactions
+Rel(user_service, main_db, "Читает/Записывает", "SQL")
+Rel(movie_service, main_db, "Читает/Записывает", "SQL")
+Rel(subscription_service, main_db, "Читает/Записывает", "SQL")
+Rel(payment_service, main_db, "Читает/Записывает", "SQL")
+Rel(analytics_service, analytics_db, "Записывает аналитику", "SQL")
+Rel(watch_history_service, analytics_db, "Записывает историю", "SQL")
+
+' Cache interactions
+Rel(api_gateway, cache, "Кэширование", "Redis Protocol")
+Rel(movie_service, cache, "Кэширование", "Redis Protocol")
+Rel(catalog_service, cache, "Кэширование", "Redis Protocol")
+Rel(user_service, cache, "Кэширование сессий", "Redis Protocol")
+
+' Service mesh
+Rel(service_mesh, api_gateway, "Управление трафиком", "")
+Rel(service_mesh, auth_service, "Управление трафиком", "")
+Rel(service_mesh, user_service, "Управление трафиком", "")
+Rel(service_mesh, movie_service, "Управление трафиком", "")
+
+' Config server
+Rel(config_server, api_gateway, "Конфигурация", "HTTP")
+Rel(config_server, auth_service, "Конфигурация", "HTTP")
+Rel(config_server, user_service, "Конфигурация", "HTTP")
+Rel(config_server, movie_service, "Конфигурация", "HTTP")
+
+@enduml

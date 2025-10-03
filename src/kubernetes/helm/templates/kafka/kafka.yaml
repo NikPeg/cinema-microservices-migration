@@ -180,6 +180,14 @@ spec:
           value: "1"
         - name: KAFKA_LOG_DIRS
           value: "/kafka/kafka-logs"
+        - name: KAFKA_CLEANUP_POLICY
+          value: "delete"
+        - name: KAFKA_LOG_RETENTION_HOURS
+          value: "168"
+        - name: KAFKA_LOG_SEGMENT_BYTES
+          value: "1073741824"
+        - name: KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS
+          value: "300000"
         volumeMounts:
         - name: kafka-data
           mountPath: /kafka
